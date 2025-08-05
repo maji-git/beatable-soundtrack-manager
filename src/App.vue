@@ -131,10 +131,10 @@ const deleteFile = async (chartFileData: IChartFile) => {
         <p>Connect your Quest to your computer, then click 'Select Device' and choose your Quest from the list.</p>
         <button class="btn btn-light" @click="openDevice">Select Device</button>
       </div>
-      <div v-if="connectionState == 'connecting'">
+      <div class="alert alert-info mt-2" role="alert" v-if="connectionState == 'connecting'">
         <p>Connecting via USB...</p>
       </div>
-      <div v-if="connectionState == 'authenticating'">
+      <div class="alert alert-info mt-2" role="alert" v-if="connectionState == 'authenticating'">
         <p>Put on your headset then press "Allow" to continue</p>
       </div>
     </main>
