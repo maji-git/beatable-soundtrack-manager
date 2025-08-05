@@ -132,10 +132,10 @@ const deleteFile = async (chartFileData: IChartFile) => {
         <button class="btn btn-light" @click="openDevice">Select Device</button>
       </div>
       <div class="alert alert-info mt-2" role="alert" v-if="connectionState == 'connecting'">
-        <p>Connecting via USB...</p>
+        Connecting via USB...
       </div>
       <div class="alert alert-info mt-2" role="alert" v-if="connectionState == 'authenticating'">
-        <p>Put on your headset then press "Allow" to continue</p>
+        Put on your headset then press "Allow" to continue
       </div>
     </main>
 
