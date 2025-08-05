@@ -10,6 +10,10 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
+    background-color: rgb(20,20,20);
+    border-radius: 8px;
+    padding: 3em 0em;
+    margin-bottom: 1em;
 }
 
 @media (min-width: 1200px) {
@@ -20,6 +24,8 @@ body {
 
 .soundtrack-card p {
     margin: 0;
+    flex-wrap: 1;
+    text-overflow: ellipsis;
 }
 
 .soundtrack-card .card-body {

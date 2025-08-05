@@ -4,6 +4,7 @@ import { connectDevice, getAdb, requestDevice } from './utils/device';
 import type { Adb, AdbSync } from '@yume-chan/adb';
 import path from 'path-browserify';
 import { IconCardboards, IconMusic } from '@tabler/icons-vue';
+import { AdbDaemonWebUsbDevice } from '@yume-chan/adb-daemon-webusb';
 
 const CUSTOM_SONG_LOCATION = "storage/emulated/0/Android/data/com.xrgames.beatable/files/CustomSongs"
 
@@ -60,7 +61,7 @@ const openDevice = async () => {
         const appFiles = await sync.readdir("storage/emulated/0/Android/data/")
         console.log(appFiles)
         const beatableInstalled = appFiles.find((e) => e.name == "com.xrgames.beatable") != undefined
-          connectionState.value = ""
+        connectionState.value = ""
 
         if (beatableInstalled) {
           console.log("Beatable installed")
@@ -73,7 +74,15 @@ const openDevice = async () => {
         //console.log(lsData)
       }
     } catch (err) {
-      alert(err)
+      if (err instanceof AdbDaemonWebUsbDevice.DeviceBusyError) {
+        alert(
+          "The device is already in use by another program. (If you have adb.exe installed, please kill the process first)",
+        );
+      } else {
+        alert(err)
+      }
+
+      connectionState.value = ""
     }
   }
 }
@@ -122,6 +131,9 @@ const deleteFile = async (chartFileData: IChartFile) => {
         <p>Connect your Quest to your computer, then click 'Select Device' and choose your Quest from the list.</p>
         <button class="btn btn-light" @click="openDevice">Select Device</button>
       </div>
+      <div v-if="connectionState == 'connecting'">
+        <p>Connecting via USB...</p>
+      </div>
       <div v-if="connectionState == 'authenticating'">
         <p>Put on your headset then press "Allow" to continue</p>
       </div>
@@ -154,8 +166,12 @@ const deleteFile = async (chartFileData: IChartFile) => {
 
     <div>
       <hr>
-      <p>Made by <a href="https://himaji.xyz/">himaji!</a></p>
-      <p>Made by <a href="https://himaji.xyz/">Source code</a></p>
+      <p class="text-muted m-0">Make sure that you have BEATABLE installed and have launched it once before using this
+        tool.</p>
+      <p class="text-muted">This tool is not affiliated with XR Games</p>
+      <p class="m-0">Made by <a href="https://himaji.xyz/" target="_blank">himaji!</a></p>
+      <p class="m-0"><a href="https://github.com/maji-git/beatable-soundtrack-manager" target="_blank">Source code</a>
+      </p>
     </div>
   </div>
 </template>
