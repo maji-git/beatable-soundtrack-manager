@@ -1,0 +1,30 @@
+body {
+    font-family: "Funnel Sans", sans-serif;
+    background-color: rgb(27, 27, 27);
+}
+
+.banner {
+    margin-top: 2em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+@media (min-width: 1200px) {
+    .container, .container-lg, .container-md, .container-sm, .container-xl {
+        max-width: 800px;
+    }
+}
+
+.soundtrack-card p {
+    margin: 0;
+}
+
+.soundtrack-card .card-body {
+    padding: 0.5em 1em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
