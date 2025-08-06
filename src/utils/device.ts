@@ -7,7 +7,7 @@ const CredentialStore: AdbWebCredentialStore = new AdbWebCredentialStore("Beatab
 
 export async function requestDevice() {
     if (!Manager) {
-        alert("Error: No ADB Interface")
+        alert("Error: No ADB Interface (Your device may be unsupported)")
         return
     }
     const device: AdbDaemonWebUsbDevice | undefined = await Manager.requestDevice();
