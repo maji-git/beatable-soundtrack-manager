@@ -65,13 +65,24 @@ const openDevice = async () => {
 
         if (beatableInstalled) {
           console.log("Beatable installed")
+
+          const beatableFolder = await sync.readdir("storage/emulated/0/Android/data/com.xrgames.beatable/files")
+
+          console.log(beatableFolder)
+
+          // Check for custom song folder
+          const customSongFolder = beatableFolder.find((e) => e.name == "CustomSongs") != undefined
+
+          if (!customSongFolder) {
+            console.log("CustomSongs folder not found, creating one now.")
+            await adb.subprocess.noneProtocol.spawn(`mkdir ${CUSTOM_SONG_LOCATION}`)
+          }
+
           readChartsInDevice()
           deviceConnected.value = true
         } else {
           alert("Beatable is not installed")
         }
-        //const lsData = await runCmd("cd storage/emulated/0/Android/data/ && ls -1")
-        //console.log(lsData)
       }
     } catch (err) {
       if (err instanceof AdbDaemonWebUsbDevice.DeviceBusyError) {
@@ -107,6 +118,12 @@ const deleteFile = async (chartFileData: IChartFile) => {
   await adb.rm(chartFileData.filePath)
   console.log(chartFileData.fileName, " Deleted")
   readChartsInDevice()
+}
+
+const deleteCustomSongs = async () => {
+  if (confirm("Are you sure you want to delete CustomSongs folder?")) {
+    await adb.rm(CUSTOM_SONG_LOCATION, { recursive: true, force: true })
+  }
 }
 </script>
 
@@ -162,6 +179,15 @@ const deleteFile = async (chartFileData: IChartFile) => {
       </div>
 
       <p class="text-muted" v-if="installedCharts.length == 0">No custom songs installed -w-</p>
+
+      <hr>
+      </hr>
+
+      <details>
+        <summary>Developer Options</summary>
+        <br>
+        <button class="btn btn-danger" @click="deleteCustomSongs">Delete CustomSongs folder</button>
+      </details>
     </div>
 
     <div>
