@@ -141,6 +141,16 @@ const deleteFile = async (chartFileData: IChartFile) => {
 
     <div v-if="deviceConnected">
       <hr>
+
+      <h3>Upload Soundtrack to Device</h3>
+
+      <input v-if="!uploadingSong" class="form-control" type="file" multiple @change="installChart" accept=".beats" />
+      <div v-if="uploadingSong" class="d-flex align-items-center mt-2">
+        <div class="spinner-border text-light me-2" role="status"></div>
+        <p>Uploading {{ uploadingName }}</p>
+      </div>
+
+      <hr>
       <h3>Installed Soundtracks</h3>
 
       <div class="card soundtrack-card mb-1" v-for="f in installedCharts">
@@ -152,16 +162,6 @@ const deleteFile = async (chartFileData: IChartFile) => {
       </div>
 
       <p class="text-muted" v-if="installedCharts.length == 0">No custom songs installed -w-</p>
-
-      <hr>
-
-      <h3>Upload Soundtrack to Device</h3>
-
-      <input v-if="!uploadingSong" class="form-control" type="file" multiple @change="installChart" accept=".beats" />
-      <div v-if="uploadingSong" class="d-flex align-items-center mt-2">
-        <div class="spinner-border text-light me-2" role="status"></div>
-        <p>Uploading {{ uploadingName }}</p>
-      </div>
     </div>
 
     <div>
