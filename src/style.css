@@ -18,19 +18,42 @@ body {
 
 @media (min-width: 1200px) {
     .container, .container-lg, .container-md, .container-sm, .container-xl {
-        max-width: 800px;
+        max-width: 1000px;
     }
+}
+
+.soundtrack-card {
+    margin: 0.5em;
 }
 
 .soundtrack-card p {
     margin: 0;
-    flex-wrap: 1;
     text-overflow: ellipsis;
 }
 
 .soundtrack-card .card-body {
-    padding: 0.5em 1em;
+    padding: 0.5em 0em;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: start;
+}
+
+.soundtrack-info {
+    display: flex;
+    width: 100%;
+}
+
+.cover-art {
+    transform: rotate(180deg);
+    width: 100px;
+    height: 100px;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.st-data {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
     justify-content: space-between;
 }

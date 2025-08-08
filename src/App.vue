@@ -3,8 +3,10 @@ import { ref, type Ref } from 'vue';
 import { connectDevice, getAdb, requestDevice } from './utils/device';
 import type { Adb, AdbSync } from '@yume-chan/adb';
 import path from 'path-browserify';
-import { IconCardboards, IconMusic } from '@tabler/icons-vue';
+import { IconCardboards, IconMusic, IconQuestionMark } from '@tabler/icons-vue';
 import { AdbDaemonWebUsbDevice } from '@yume-chan/adb-daemon-webusb';
+import { BeatableChartData, readBeats } from './utils/beats-reader';
+import { convertRGBtoRGBA, imageDataToBlobUrl } from './utils/image';
 
 const CUSTOM_SONG_LOCATION = "storage/emulated/0/Android/data/com.xrgames.beatable/files/CustomSongs"
 
@@ -20,7 +22,56 @@ let sync: AdbSync
 interface IChartFile {
   filePath: string
   fileName: string
+  imageBlobURL?: string
+  fileData?: BeatableChartData
 }
+
+function addChartToInstalled(fileName: string, filePath: string) {
+  const chunks: Uint8Array[] = [];
+
+  //@ts-expect-error Allow WritableStream
+  const fileContentReader = sync.read(filePath).pipeTo(new WritableStream({
+    write(chunk) {
+      chunks.push(chunk)
+    },
+    async close() {
+      // Calculate total length
+      const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const result = new Uint8Array(totalLength);
+
+      // Copy all chunks into the result buffer
+      let offset = 0;
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      // Read beats file
+      const beatsFile = readBeats(result.buffer)
+
+      let imageData: ImageData
+      let imageBlobURL = ""
+      if (beatsFile) {
+        // Get cover art
+        if (beatsFile.coverArt.width != 0) {
+          const rgbaBuffer = convertRGBtoRGBA(new Uint8Array(beatsFile.coverArt.data), beatsFile.coverArt.width, beatsFile.coverArt.height);
+          imageData = new ImageData(rgbaBuffer, beatsFile.coverArt.width, beatsFile.coverArt.height);
+
+          imageBlobURL = await imageDataToBlobUrl(imageData)
+        }
+      }
+
+      installedCharts.value.push({
+        fileData: beatsFile,
+        imageBlobURL: imageBlobURL,
+        fileName: fileName,
+        filePath: filePath
+      })
+    }
+  }),
+  )
+}
+
 
 const readChartsInDevice = async () => {
   installedCharts.value = []
@@ -28,10 +79,8 @@ const readChartsInDevice = async () => {
 
   for (const song of customSongs) {
     if (song.name.endsWith(".beats")) {
-      installedCharts.value.push({
-        fileName: song.name,
-        filePath: path.join(CUSTOM_SONG_LOCATION, song.name)
-      })
+      const filePath = path.join(CUSTOM_SONG_LOCATION, song.name)
+      addChartToInstalled(song.name, filePath)
     }
   }
 }
@@ -102,27 +151,39 @@ const installChart = async (event: any) => {
   uploadingSong.value = true
   for (const file of event.target.files) {
     console.log("Uploading ", file.name)
-    console.log(file)
-    uploadingName.value = file.name
+
+    const filePath = path.join(CUSTOM_SONG_LOCATION, file.name)
+    const fileName = file.name
+
+    console.log(installedCharts.value.findIndex((e) => {e.fileName.trim() == fileName.trim()}))
+    // Check for existing file
+    if (installedCharts.value.findIndex((e) => {e.fileName == fileName}) != -1) {
+      console.log(fileName, " already exists, skipping")
+      continue
+    }
+
+    uploadingName.value = fileName
 
     await sync.write({
       filename: path.join(CUSTOM_SONG_LOCATION, file.name),
       file: file.stream()
     })
+
+    addChartToInstalled(fileName, filePath)
   }
   uploadingSong.value = false
-  readChartsInDevice()
 }
 
 const deleteFile = async (chartFileData: IChartFile) => {
   await adb.rm(chartFileData.filePath)
   console.log(chartFileData.fileName, " Deleted")
-  readChartsInDevice()
+  // Delete from installed charts
+  installedCharts.value.splice(installedCharts.value.findIndex((e) => e.filePath == chartFileData.filePath), 1)
 }
 
 const deleteCustomSongs = async () => {
   if (confirm("Are you sure you want to delete CustomSongs folder?")) {
-    await adb.rm(CUSTOM_SONG_LOCATION, { recursive: true, force: true })
+    await adb.rm(CUSTOM_SONG_LOCATION, { recursive: true })
   }
 }
 </script>
@@ -170,11 +231,28 @@ const deleteCustomSongs = async () => {
       <hr>
       <h3>Installed Soundtracks</h3>
 
-      <div class="card soundtrack-card mb-1" v-for="f in installedCharts">
-        <div class="card-body">
-          <p>
-            <IconMusic class="me-1" stroke-width="1.5" /> {{ f.fileName }}
-          </p> <button class="btn btn-danger" @click="deleteFile(f)">Delete</button>
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="card soundtrack-card col-md-5" v-for="f in installedCharts">
+            <div class="card-body">
+              <div v-if="f.fileData" class="soundtrack-info">
+                <div class="cover-art rounded" :style="`background-image: url(${f.imageBlobURL})`"></div>
+                <div class="ms-3 st-data">
+                  <div>
+                    <p class="mt-1">{{ f.fileData.songDetails.songTitle }}</p>
+                    <p class="text-muted">{{ f.fileData.songDetails.artist }}</p>
+                  </div>
+                  <div>
+                    <button class="btn btn-danger" @click="deleteFile(f)">Delete</button>
+                  </div>
+                </div>
+              </div>
+              <p v-else>
+                <IconQuestionMark class="me-1" stroke-width="1.5" /> Unknown file
+                <button class="btn btn-danger" @click="deleteFile(f)">Delete</button>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
